@@ -5,19 +5,30 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+
 public class MusicPlayerActivity extends Activity implements OnCompletionListener, SeekBar.OnSeekBarChangeListener {
+
+	private static final int PERMISSION_REQUEST_CODE = 1;
 
 	private ImageButton btnPlay;
 	private ImageButton btnForward;
@@ -49,7 +60,45 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.player);
-		
+
+		if(Build.VERSION.SDK_INT >= 23){
+			if(checkPermission()){
+				Log.e("MusicPlayer", "Player has already the required permission. ");
+				init();
+			} else {
+				requestPermission();
+			}
+		}
+	}
+
+	private boolean checkPermission() {
+		int result = ContextCompat.checkSelfPermission(MusicPlayerActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+		if(result == PackageManager.PERMISSION_GRANTED){
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private void requestPermission() {
+		ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},PERMISSION_REQUEST_CODE);
+	}
+
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+		switch (requestCode){
+			case PERMISSION_REQUEST_CODE:
+				if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+					Toast.makeText(MusicPlayerActivity.this,"Permission accepted",Toast.LENGTH_LONG).show();
+				} else {
+					Toast.makeText(MusicPlayerActivity.this,"Permission denied",Toast.LENGTH_LONG).show();
+				}
+				break;
+		}
+	}
+
+	private void init(){
 		// All player buttons
 		btnPlay = (ImageButton) findViewById(R.id.btnPlay);
 		btnForward = (ImageButton) findViewById(R.id.btnForward);
@@ -63,29 +112,29 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 		songTitleLabel = (TextView) findViewById(R.id.songTitle);
 		songCurrentDurationLabel = (TextView) findViewById(R.id.songCurrentDurationLabel);
 		songTotalDurationLabel = (TextView) findViewById(R.id.songTotalDurationLabel);
-		
+
 		// Mediaplayer
 		mp = new MediaPlayer();
 		songManager = new SongsManager();
 		utils = new Utilities();
-		
+
 		// Listeners
 		songProgressBar.setOnSeekBarChangeListener(this); // Important
 		mp.setOnCompletionListener(this); // Important
-		
+
 		// Getting all songs list
 		songsList = songManager.getPlayList();
-		
+
 		// By default play first song
 		playSong(0);
-				
+
 		/**
 		 * Play button click event
 		 * plays a song and changes button to pause image
 		 * pauses a song and changes button to play image
 		 * */
 		btnPlay.setOnClickListener(new View.OnClickListener() {
-			
+
 			@Override
 			public void onClick(View arg0) {
 				// check for already playing
@@ -103,19 +152,19 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 						btnPlay.setImageResource(R.drawable.btn_pause);
 					}
 				}
-				
+
 			}
 		});
-		
+
 		/**
 		 * Forward button click event
 		 * Forwards song specified seconds
 		 * */
 		btnForward.setOnClickListener(new View.OnClickListener() {
-			
+
 			@Override
 			public void onClick(View arg0) {
-				// get current song position				
+				// get current song position
 				int currentPosition = mp.getCurrentPosition();
 				// check if seekForward time is lesser than song duration
 				if(currentPosition + seekForwardTime <= mp.getDuration()){
@@ -127,16 +176,16 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 				}
 			}
 		});
-		
+
 		/**
 		 * Backward button click event
 		 * Backward song to specified seconds
 		 * */
 		btnBackward.setOnClickListener(new View.OnClickListener() {
-			
+
 			@Override
 			public void onClick(View arg0) {
-				// get current song position				
+				// get current song position
 				int currentPosition = mp.getCurrentPosition();
 				// check if seekBackward time is greater than 0 sec
 				if(currentPosition - seekBackwardTime >= 0){
@@ -146,16 +195,16 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 					// backward to starting position
 					mp.seekTo(0);
 				}
-				
+
 			}
 		});
-		
+
 		/**
 		 * Next button click event
 		 * Plays next song by taking currentSongIndex + 1
 		 * */
 		btnNext.setOnClickListener(new View.OnClickListener() {
-			
+
 			@Override
 			public void onClick(View arg0) {
 				// check if next song is there or not
@@ -167,16 +216,16 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 					playSong(0);
 					currentSongIndex = 0;
 				}
-				
+
 			}
 		});
-		
+
 		/**
 		 * Back button click event
 		 * Plays previous song by currentSongIndex - 1
 		 * */
 		btnPrevious.setOnClickListener(new View.OnClickListener() {
-			
+
 			@Override
 			public void onClick(View arg0) {
 				if(currentSongIndex > 0){
@@ -187,16 +236,16 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 					playSong(songsList.size() - 1);
 					currentSongIndex = songsList.size() - 1;
 				}
-				
+
 			}
 		});
-		
+
 		/**
 		 * Button Click event for Repeat button
 		 * Enables repeat flag to true
 		 * */
 		btnRepeat.setOnClickListener(new View.OnClickListener() {
-			
+
 			@Override
 			public void onClick(View arg0) {
 				if(isRepeat){
@@ -211,16 +260,16 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 					isShuffle = false;
 					btnRepeat.setImageResource(R.drawable.btn_repeat_focused);
 					btnShuffle.setImageResource(R.drawable.btn_shuffle);
-				}	
+				}
 			}
 		});
-		
+
 		/**
 		 * Button Click event for Shuffle button
 		 * Enables shuffle flag to true
 		 * */
 		btnShuffle.setOnClickListener(new View.OnClickListener() {
-			
+
 			@Override
 			public void onClick(View arg0) {
 				if(isShuffle){
@@ -235,23 +284,22 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 					isRepeat = false;
 					btnShuffle.setImageResource(R.drawable.btn_shuffle_focused);
 					btnRepeat.setImageResource(R.drawable.btn_repeat);
-				}	
+				}
 			}
 		});
-		
+
 		/**
 		 * Button Click event for Play list click event
 		 * Launches list activity which displays list of songs
 		 * */
 		btnPlaylist.setOnClickListener(new View.OnClickListener() {
-			
+
 			@Override
 			public void onClick(View arg0) {
 				Intent i = new Intent(getApplicationContext(), PlayListActivity.class);
-				startActivityForResult(i, 100);			
+				startActivityForResult(i, 100);
 			}
 		});
-		
 	}
 	
 	/**

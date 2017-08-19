@@ -91,7 +91,9 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 			case PERMISSION_REQUEST_CODE:
 				if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
 					Toast.makeText(MusicPlayerActivity.this,"Permission accepted",Toast.LENGTH_LONG).show();
+					init();
 				} else {
+
 					Toast.makeText(MusicPlayerActivity.this,"Permission denied",Toast.LENGTH_LONG).show();
 				}
 				break;

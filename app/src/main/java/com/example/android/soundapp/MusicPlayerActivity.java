@@ -81,7 +81,14 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 	}
 
 	private void requestPermission() {
-		ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},PERMISSION_REQUEST_CODE);
+
+		if (ActivityCompat.shouldShowRequestPermissionRationale(MusicPlayerActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+			Toast.makeText(MusicPlayerActivity.this, "This permission is required to play media files, stored on your device sd card.", Toast.LENGTH_LONG).show();
+		} else {
+			ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},PERMISSION_REQUEST_CODE);
+		}
+
+
 	}
 
 
@@ -95,25 +102,31 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 				} else {
 
 					Toast.makeText(MusicPlayerActivity.this,"Permission denied",Toast.LENGTH_LONG).show();
+					// permission denied, boo! Disable the
+					// functionality that depends on this permission.
+
+
 				}
-				break;
+				return;
 		}
 	}
 
+	
+
 	private void init(){
 		// All player buttons
-		btnPlay = (ImageButton) findViewById(R.id.btnPlay);
-		btnForward = (ImageButton) findViewById(R.id.btnForward);
-		btnBackward = (ImageButton) findViewById(R.id.btnBackward);
-		btnNext = (ImageButton) findViewById(R.id.btnNext);
-		btnPrevious = (ImageButton) findViewById(R.id.btnPrevious);
-		btnPlaylist = (ImageButton) findViewById(R.id.btnPlaylist);
-		btnRepeat = (ImageButton) findViewById(R.id.btnRepeat);
-		btnShuffle = (ImageButton) findViewById(R.id.btnShuffle);
-		songProgressBar = (SeekBar) findViewById(R.id.songProgressBar);
-		songTitleLabel = (TextView) findViewById(R.id.songTitle);
-		songCurrentDurationLabel = (TextView) findViewById(R.id.songCurrentDurationLabel);
-		songTotalDurationLabel = (TextView) findViewById(R.id.songTotalDurationLabel);
+		btnPlay = findViewById(R.id.btnPlay);
+		btnForward = findViewById(R.id.btnForward);
+		btnBackward = findViewById(R.id.btnBackward);
+		btnNext = findViewById(R.id.btnNext);
+		btnPrevious = findViewById(R.id.btnPrevious);
+		btnPlaylist = findViewById(R.id.btnPlaylist);
+		btnRepeat = findViewById(R.id.btnRepeat);
+		btnShuffle = findViewById(R.id.btnShuffle);
+		songProgressBar = findViewById(R.id.songProgressBar);
+		songTitleLabel = findViewById(R.id.songTitle);
+		songCurrentDurationLabel = findViewById(R.id.songCurrentDurationLabel);
+		songTotalDurationLabel = findViewById(R.id.songTotalDurationLabel);
 
 		// Mediaplayer
 		mp = new MediaPlayer();
@@ -140,7 +153,9 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 			@Override
 			public void onClick(View arg0) {
 				// check for already playing
+
 				if(mp.isPlaying()){
+
 					if(mp!=null){
 						mp.pause();
 						// Changing button image to play button
@@ -149,6 +164,7 @@ public class MusicPlayerActivity extends Activity implements OnCompletionListene
 				}else{
 					// Resume song
 					if(mp!=null){
+
 						mp.start();
 						// Changing button image to pause button
 						btnPlay.setImageResource(R.drawable.btn_pause);
